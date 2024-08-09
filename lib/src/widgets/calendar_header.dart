@@ -1,9 +1,7 @@
-// Copyright 2019 Aleksander Woźniak
-// SPDX-License-Identifier: Apache-2.0
-
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+// Assuming the following imports are already present
 import '../customization/header_style.dart';
 import '../shared/utils.dart' show CalendarFormat, DayBuilder;
 import 'custom_icon_button.dart';
@@ -42,6 +40,21 @@ class CalendarHeader extends StatelessWidget {
     final text = headerStyle.titleTextFormatter?.call(focusedMonth, locale) ??
         DateFormat.yMMMM(locale).format(focusedMonth);
 
+    final monthFormatter = DateFormat('MMMM', locale);
+    final yearFormatter = DateFormat('yyyy', locale);
+
+    final formattedMonth = monthFormatter.format(focusedMonth);
+    final formattedYear = yearFormatter.format(focusedMonth);
+
+    List<String> getMonthNames(String locale) {
+      final DateFormat monthFormatter = DateFormat('MMMM', locale);
+
+      return List.generate(12, (index) {
+        DateTime date = DateTime(2024, index + 1);
+        return monthFormatter.format(date);
+      });
+    }
+
     return Container(
       decoration: headerStyle.decoration,
       margin: headerStyle.headerMargin,
@@ -59,14 +72,74 @@ class CalendarHeader extends StatelessWidget {
           Expanded(
             child: headerTitleBuilder?.call(context, focusedMonth) ??
                 GestureDetector(
-                  onTap: onHeaderTap,
+                  onTap: () {
+                    print(text);
+                  },
                   onLongPress: onHeaderLongPress,
-                  child: Text(
-                    text,
-                    style: headerStyle.titleTextStyle,
-                    textAlign: headerStyle.titleCentered
-                        ? TextAlign.center
-                        : TextAlign.start,
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          var months = await getMonthNames('en_US');
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Select Month'),
+                                content: Container(
+                                  width: double.maxFinite,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: months
+                                        .map((month) => Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 4.0),
+                                              child: Text(
+                                                month,
+                                                style:
+                                                    headerStyle.titleTextStyle,
+                                                textAlign: TextAlign.start,
+                                              ),
+                                            ))
+                                        .toList(),
+                                  ),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: Text('Close'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Text(
+                              formattedMonth,
+                              style: headerStyle.titleTextStyle,
+                              textAlign: headerStyle.titleCentered
+                                  ? TextAlign.center
+                                  : TextAlign.start,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              formattedYear,
+                              style: headerStyle.titleTextStyle,
+                              textAlign: headerStyle.titleCentered
+                                  ? TextAlign.center
+                                  : TextAlign.start,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
           ),
